@@ -85,7 +85,7 @@ for dirpath,dirnames,filenames in walk('testdir2'):
 print(listoffiles)
 print(index)
 
-
+#comment on line 88
 
 #for filename in listoffiles:
     #with open('testdir/'+filename,'r') as f:
