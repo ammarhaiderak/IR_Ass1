@@ -1,6 +1,0 @@
-a	0
-is	1
-boy	2
-ali	3
-bad	4
-good	5

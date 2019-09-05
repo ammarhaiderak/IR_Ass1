@@ -11,7 +11,16 @@ from html.parser import HTMLParser
 #from nltk.stem import PorterStemmer
 import re
 import nltk
+import sys
 sno = nltk.stem.SnowballStemmer('english')
+
+
+print('\'Welcome to Mini Search Engine\'')
+print('COMMANDS\n')
+print('1. --terms <term to search> \n')
+print('2. --make <corpus directory> \n')
+
+
 
 
 #ps=PorterStemmer()
@@ -20,8 +29,9 @@ sno = nltk.stem.SnowballStemmer('english')
 term_id=0
 
 inverted_index={
-        }
 
+        }
+terms_list=[]
 
 #inverted_index_item={
 #        'termid':None,
@@ -129,8 +139,9 @@ def addtoInvertedIndex(listofterms,docid):
         val=inverted_index.get(term)   
         
         if val is None:
-            inverted_index[term]=[]
-        inverted_index[term].append(item)
+            inverted_index[term]={}
+            inverted_index[term]['doclist']=[]
+        inverted_index[term]['doclist'].append(item)
         pos=pos+1 
 
 
@@ -140,7 +151,7 @@ def writeinvindfile():
     term_id=0
     with open('term_index.txt','w') as f:
         for i in inverted_index:
-            _tuple=inverted_index[i]
+            _tuple=inverted_index[i]['doclist']
             #print(i)
             #print(_tuple)
             c_wordcount=len(_tuple)     #wordcount in corpus
@@ -195,7 +206,7 @@ def makeinvind(doc_directory):
     #with open('terms.txt','w') as f1:
     for filename in listoffiles:
         parser = MyHTMLParser()
-        with open(doc_directory+'/'+filename,'r') as f:
+        with open(doc_directory+'/'+filename,'r',encoding='utf-8',errors='ignore') as f:
         #f=open(doc_directory+'/'+filename,'r') 
         #with open('testdir2/'+listoffiles[0],'r') as f:
             contents=f.read()
@@ -213,6 +224,10 @@ def makeinvind(doc_directory):
     
     keys=[*inverted_index.keys()]
     writeterms(keys)
+    global terms_list
+    terms_list=keys
+    
+    
     
     writeinvindfile()
     
@@ -222,16 +237,112 @@ def makeinvind(doc_directory):
 
 
 
-option = input('Enter 1 for making inverted index or 2 for fetching inverted index from file: ')
-if int(option) == 1:
-    doc_directory = input('Enter name of the directory: ')  
-    makeinvind(doc_directory)
-elif int(option) == 2:
-    command=input('Enter respective command: ')
+
+def loadterms():
+    global terms_list
+    with open('terms.txt','r') as f2:
+        for l in f2:
+            #print(l,end='')
+            start=l.find('\t')
+          #  end=l.find('\n')
+            #print(str(start)+','+str(end))
+            term=l[0:start]
+            terms_list.append(term)
+            #print(l[start+1:end])
+
+
+
+def loadinvertedindex():
+    loadterms()
+    global terms_list,inverted_index
+
+    with open('term_index.txt') as f:
+        for l in f:
+            tab=l.split('\t')
+            pairs=re.findall('\d{1,},\d{1,}',tab[3])
+            #print(tab)
+            term=terms_list[int(tab[0])]    
+            res=inverted_index.get(term)
+            if res is None:
+                inverted_index[term]={}
+                inverted_index[term]['doclist']=[]
+                
+            inverted_index[term]['corpuscount']=tab[1]
+            inverted_index[term]['doccount']=tab[2]
+            
+            for _tuple in pairs:
+                t={'docid':None,'position':None}
+                vals=_tuple.split(',')
+                t['docid']=vals[0]
+                t['position']=vals[1]
+                inverted_index[term]['doclist'].append(t)   
+                
+    #print(inverted_index)        
+    
+        
+    
+
+def parsecommand():
+    args=sys.argv
+    if len(args)<=1:
+        print('Type in the correct Command!')
+        return False
+    
+    term=None
+    arg=str(args[1])
+    if  arg == '--term':
+       term=str(args[2])
+       loadinvertedindex()         #using index_file.txt
+       
+       v=inverted_index.get(sno.stem(term))
+       print(v)
+       
+           
+           
+       
+       
+       return True
+   
+       if v is not None:
+           print(v)
+       else:
+           print('No such term found!')
+   
+           return False
+           
+    elif arg == '--make':
+        doc_directory=str(args[2])      #corpus directory
+        makeinvind(doc_directory)   #using corpus
+        return True
+    else:
+       print('No argument like '+str(args[1]))
+       return False
+    
     
 
 
+## main
+
+parsecommand()
+
+
+
+
+    #command=input('Enter respective command: ')
+ 
+
 #print(inverted_index)
+
+
+
+#termid occurence_in_corpus documents <docid,pos>
+
+#1	4	3	 0,2  0,3  1,1  2,2 
+
+
+         #   inverted_index[]
+        #    print(t)
+        #print(pairs)
 
 
 
