@@ -12,25 +12,16 @@ from html.parser import HTMLParser
 import re
 import nltk
 import sys
+import datetime
 sno = nltk.stem.SnowballStemmer('english')
-
-
-print('\'Welcome to Mini Search Engine\'')
-print('COMMANDS\n')
-print('1. --terms <term to search> \n')
-print('2. --make <corpus directory> \n')
-
-
-
 
 #ps=PorterStemmer()
 
-
 term_id=0
 
-inverted_index={
+inverted_index={}
+totalcorpuscount=0
 
-        }
 terms_list=[]
 
 #inverted_index_item={
@@ -127,7 +118,7 @@ def writeterms(terms_list):
     f_desc.close()
 
     
-def addtoInvertedIndex(listofterms,docid):
+def addtoInvertedIndex(listofterms,docid):      #dictionary
     global inverted_index
     pos=0
     for term in listofterms:
@@ -143,6 +134,7 @@ def addtoInvertedIndex(listofterms,docid):
             inverted_index[term]['doclist']=[]
         inverted_index[term]['doclist'].append(item)
         pos=pos+1 
+
 
 
 
@@ -183,24 +175,26 @@ def writeinvindfile():
 
 
 
-
-def makeinvind(doc_directory):
+def makedoctxt(doc_directory):
     listoffiles=None
     index=0
     for dirpath,dirnames,filenames in walk(doc_directory):
         #print(filenames)
         listoffiles=filenames
         index=index+1
-    
-    #print(listoffiles)
-    #print(index)
-    #python
-    
-    
-    
+        
     #writing the file docs.txt
     maketxtfile(listoffiles,'docs.txt')
+
+    return listoffiles
+
+
+
+def makeinvind(doc_directory):
     
+    print('start_time: ',datetime.datetime.now(),'\n')
+
+    listoffiles=makedoctxt(doc_directory)
     doc_id=0
     
     #with open('terms.txt','w') as f1:
@@ -232,10 +226,10 @@ def makeinvind(doc_directory):
     writeinvindfile()
     
     print('Inverted Index Successfully made!')
+    print('endtime :',datetime.datetime.now(),'\n')
 
 
-
-
+   
 
 
 def loadterms():
@@ -254,7 +248,7 @@ def loadterms():
 
 def loadinvertedindex():
     loadterms()
-    global terms_list,inverted_index
+    global terms_list,inverted_index,totalcorpuscount
 
     with open('term_index.txt') as f:
         for l in f:
@@ -269,7 +263,9 @@ def loadinvertedindex():
                 
             inverted_index[term]['corpuscount']=tab[1]
             inverted_index[term]['doccount']=tab[2]
-            
+            totalcorpuscount=totalcorpuscount+int(tab[1])            
+
+
             for _tuple in pairs:
                 t={'docid':None,'position':None}
                 vals=_tuple.split(',')
@@ -279,10 +275,18 @@ def loadinvertedindex():
                 
     #print(inverted_index)        
     
+    
+
+        
+
+
+    
         
     
 
 def parsecommand():
+    global terms_list
+    
     args=sys.argv
     if len(args)<=1:
         print('Type in the correct Command!')
@@ -295,11 +299,14 @@ def parsecommand():
        loadinvertedindex()         #using index_file.txt
        
        v=inverted_index.get(sno.stem(term))
+       corpuscount=v.get('corpuscount')
+       doccount=v.get('doccount')
+       termid=terms_list.index(sno.stem(term))
+       
+       
+       print ('termid: ',termid,'\n' ,'corpuscount: ',corpuscount,'\n','doccount: ',doccount,'\n')
        print(v)
-       
            
-           
-       
        
        return True
    
@@ -323,10 +330,16 @@ def parsecommand():
 
 ## main
 
-parsecommand()
-
-
-
+if __name__=="__main__":
+    print('\'Welcome to Mini Search Engine\'')
+    print('COMMANDS\n')
+    print('1. --term <term to search> \n')
+    print('2. --make <corpus directory> \n')
+    parsecommand()
+else:
+    print('called from program')
+    print('loading inverted index...')    
+    loadinvertedindex()
 
     #command=input('Enter respective command: ')
  
