@@ -242,7 +242,7 @@ def scoredocs(scorefunct,end):
         qnum=queries[j]['number']
         print('Making table for results for query ',qnum,'...')
             
-        with open('query_'+str(qnum)+'.csv', mode='w') as queryresult:
+        with open(scorefunct+'/query_'+str(qnum)+'.csv', mode='w+') as queryresult:
             result_writer = csv.writer(queryresult, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             result_writer.writerow(['topic','doc','rank','score','run'])            
             for s in sorted_x:            
@@ -266,108 +266,114 @@ def scoredocs(scorefunct,end):
 #loaddocs()
 
 
-def evaluate(qrelfile,end):
+def evaluate(qrelfile,end,scorefunct):
     
     avgprec=0    
-
-    for j in range(0,end):
     
-        q=queries[j]['number']
-        print('evaluating on query ',q)
+    with open(scorefunct+'/evalresults.txt','w') as evalresult:
+        for j in range(0,end):
         
-
-        relscores={}                                    #relevance scores for query q
-        #202 0 clueweb12-0900tw-23-04411 0
-        with open(qrelfile,'r') as qrel:
-             for line in qrel:
-                 l=line.split(' ')
-                 
-                 if l[0]==q:
-                    relscores[l[2]]={'topic':l[0],'score':l[3][0:len(l[3])-1]}      #key is docname
-                    #.append({'topic':l[0],'docname':l[2],'score':l[3][0:len(l[3])-1]})
-        
-
-        '''
-        for r in relscores:
-            print(relscores[r])          
-        '''
-        
-        graded={}
-        
-
-        totalrelevant=0
-
-        relvdocs=[]         #names of documents that are relevent , just to simplify/speedup calculations of MAP
-        with open('query_'+str(q)+'.csv','r') as f:       #there is a file of results for each query with name query_<topic>
-             for line in f:
-                 l=line.split(',')
-                 docname=l[1]
-                 detail=relscores.get(docname)             
-                 score=-9999    
-                 if detail is not None:                 #if grade is provided for doc otherwise -9999 which is NR
-                    score=int(detail['score'])
-                 
-                 grade='NR'
-                 if score>0:
-                    grade='R'
-                    totalrelevant+=1
-                    relvdocs.append(docname)
-
-                 graded[docname]={'grade':grade,'precision':None,'recall':None }      
-         
-        if totalrelevant==0:
-           totalrelevant=1      #to avoid divide by zero error
-
-
-        retcount=0        #retrieved count
-        relcount=0        #currently relevent docs  
-        
-        for r in graded:                    #computing precision and recall
-            grade=graded[r]['grade']
-            retcount+=1
-
-            if grade=='R':
-               relcount+=1
+            q=queries[j]['number']
+            print('evaluating on query ',q)
             
+
+            relscores={}                                    #relevance scores for query q
+            #202 0 clueweb12-0900tw-23-04411 0
+            with open(qrelfile,'r') as qrel:
+                 for line in qrel:
+                     l=line.split(' ')
+                     
+                     if l[0]==q:
+                        relscores[l[2]]={'topic':l[0],'score':l[3][0:len(l[3])-1]}      #key is docname
+                        #.append({'topic':l[0],'docname':l[2],'score':l[3][0:len(l[3])-1]})
             
-            graded[r]['recall']=relcount/totalrelevant        
-            graded[r]['precision']=relcount/retcount
+
+            '''
+            for r in relscores:
+                print(relscores[r])          
+            '''
             
-            #retcount+=1 
+            graded={}
+            
+
+            totalrelevant=0
+
+            relvdocs=[]         #names of documents that are relevent , just to simplify/speedup calculations of MAP
+            with open(scorefunct+'/query_'+str(q)+'.csv','r') as f:       #there is a file of results for each query with name query_<topic>
+                 for line in f:
+                     l=line.split(',')
+                     docname=l[1]
+                     detail=relscores.get(docname)             
+                     score=-9999    
+                     if detail is not None:                 #if grade is provided for doc otherwise -9999 which is NR
+                        score=int(detail['score'])
+                     
+                     grade='NR'
+                     if score>0:
+                        grade='R'
+                        totalrelevant+=1
+                        relvdocs.append(docname)
+
+                     graded[docname]={'grade':grade,'precision':None,'recall':None }      
+             
+            if totalrelevant==0:
+               totalrelevant=1      #to avoid divide by zero error
+
+
+            retcount=0        #retrieved count
+            relcount=0        #currently relevent docs  
+            
+            for r in graded:                    #computing precision and recall
+                grade=graded[r]['grade']
+                retcount+=1
+
+                if grade=='R':
+                   relcount+=1
                 
-        
-
-        keys=[*graded.keys()]       #list of keys i.e doc names
-        pat5=keys[4]
-        pat10=keys[9]
-        pat20=keys[19]
-        pat30=keys[29]
-
-        pat5=graded[pat5]['precision']
-        pat10=graded[pat10]['precision']
-        pat20=graded[pat20]['precision']
-        pat30=graded[pat30]['precision']
-       
-        
-        prec_sum=0  #precision sum
-        for doc in relvdocs:                #sums precision of relevant docs only
-            prec_sum+=graded[doc]['precision']
-        
-        
-        MAP=prec_sum/totalrelevant
-        
-        avgprec+=MAP
-        
-        '''
-        for r in graded:
-            print(graded[r])            
-        '''               
                 
+                graded[r]['recall']=relcount/totalrelevant        
+                graded[r]['precision']=relcount/retcount
+                
+                #retcount+=1 
+                    
+            
+
+            keys=[*graded.keys()]       #list of keys i.e doc names
+            pat5=keys[4]
+            pat10=keys[9]
+            pat20=keys[19]
+            pat30=keys[29]
+
+            pat5=graded[pat5]['precision']
+            pat10=graded[pat10]['precision']
+            pat20=graded[pat20]['precision']
+            pat30=graded[pat30]['precision']
+           
+            
+            prec_sum=0  #precision sum
+            for doc in relvdocs:                #sums precision of relevant docs only
+                prec_sum+=graded[doc]['precision']
+            
+            
+            MAP=prec_sum/totalrelevant
+            
+            avgprec+=MAP
+            
+            '''
+            for r in graded:
+                print(graded[r])            
+            '''               
+                    
+            
+            print('P@5:',pat5,'\tP@10: ',pat10,'\tP@20:',pat20,'\tP@30:',pat30,'\tMAP:',MAP)                  
+            evalresult.write('query:'+q+'\tP@5:'+str(pat5)+'\tP@10: '+str(pat10)+'\tP@20:'+str(pat20)+'\tP@30:'+str(pat30)+'\tMAP:'+str(MAP)+'\n')            
+
+             
+        print('Average AP for all queries: ',avgprec/len(queries))
         
-        print('P@5:',pat5,'\tP@10: ',pat10,'\tP@20:',pat20,'\tP@30:',pat30,'\tMAP:',MAP)                  
-         
-    print('Average AP for all queries: ',avgprec/len(queries))
- 
+        evalresult.write('Average AP for all queries: '+str(avgprec/len(queries)))
+
+
 
 def resetflag():
     with open('scored','w') as f:
@@ -401,7 +407,7 @@ def main():
     print(scoredocs(args.score,end))    
         
     if args.eval is not None:
-       evaluate(args.eval,end)      
+       evaluate(args.eval,end,args.score)      
     
     
            
