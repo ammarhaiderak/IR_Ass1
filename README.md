@@ -24,7 +24,7 @@ Topics.xml: queries with topic/query id are available in this document.
 
 
 How to run the program?
-Just these follow simple steps
+\nJust follow these simple steps
 1. for command based interfaces like linux change current directory where solution.py is present 
 2. type in "./solution.py --make {corpus folder name}"  this command will create inverted index for all documents in corpus
 3. then to lookup for a specific term in the corpus(actually inverted index) type in "./solution.py --term <word to lookup>"
